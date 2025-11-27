@@ -24,7 +24,22 @@
         .screen {
             transition: opacity 0.3s ease-in-out;
         }
+        .loading-spinner {
+            border-top-color: #3b82f6;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
+    <!-- Biblioteca PDF.js (Necessário para ler PDFs no lado do cliente/navegador) -->
+    <!-- Define o worker para a extração -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs" type="module"></script>
+    <script>
+        // Configura o worker para o PDF.js
+        window.pdfjsLib = window['pdfjs-dist/build/pdf'];
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs';
+    </script>
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
@@ -48,7 +63,7 @@
                 </button>
                 <button onclick="navigateTo('visualizar-screen')" 
                         class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md transition duration-150 ease-in-out">
-                    2. Visualizar Arquivo PDF
+                    2. Visualizar Arquivo PDF (Função Server-Side Antiga)
                 </button>
                 <button onclick="navigateTo('construcao-screen')" 
                         class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md transition duration-150 ease-in-out">
@@ -62,13 +77,19 @@
                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                     Voltar
                 </button>
-                <h2 class="text-2xl font-semibold mb-4 text-gray-700">Extração de Termos</h2>
-                <input type="text" id="pdf-consulta-input" placeholder="Nome do arquivo PDF (ex: relatorio_a)" 
-                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 mb-4">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-700">Extração de Termos (Client-Side)</h2>
                 
-                <button onclick="consultarPdf()" 
-                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md transition duration-150 ease-in-out">
+                <!-- ALTERADO PARA INPUT TYPE="FILE" -->
+                <label for="pdf-consulta-file" class="block text-sm font-medium text-gray-700 mb-2">
+                    Selecione o arquivo PDF para extração:
+                </label>
+                <input type="file" id="pdf-consulta-file" accept=".pdf" 
+                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 mb-4 bg-white">
+                
+                <button onclick="consultarPdf()" id="consultar-btn"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md transition duration-150 ease-in-out flex items-center justify-center">
                     Consultar e Extrair Termos
+                    <div id="loading-spinner" class="loading-spinner w-5 h-5 border-4 border-t-transparent border-white rounded-full ml-3 hidden"></div>
                 </button>
 
                 <!-- Resultado da Consulta -->
@@ -90,7 +111,9 @@
                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                     Voltar
                 </button>
-                <h2 class="text-2xl font-semibold mb-4 text-gray-700">Visualizar PDF</h2>
+                <h2 class="text-2xl font-semibold mb-4 text-gray-700">Visualizar PDF (Server-Side)</h2>
+                <p class="text-sm text-gray-500 mb-4">Esta função tenta abrir o PDF usando o caminho do servidor (`/assets/pdfs/`).</p>
+                
                 <input type="text" id="pdf-visualizar-input" placeholder="Nome do arquivo PDF (ex: relatorio_a)" 
                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 mb-4">
                 
@@ -119,27 +142,22 @@
     </div>
 
     <!-- Script JavaScript -->
-    <script>
-        // Configuração
-        // CORREÇÃO: Alterado de './assets/pdfs/' para '/assets/pdfs/' (caminho absoluto)
-        const PDF_BASE_PATH = '/assets/pdfs/';
-        
-        // Simulação de conteúdo de PDF para fins de demonstração (Mock de Extração)
-        // Adicionado o arquivo 'mt04_0001_00' com dados simulados.
-        const MOCK_PDF_CONTENTS = {
-            "relatorio_a": "Este é um texto de teste. O termo principal é CP12_3456_78. Temos outro termo importante, CP01_9876_54, e mais um: CP99_1111_22.",
-            "exemplo_completo": "A norma CP45_0001_01 está sendo revisada. O novo código será CP45_0002_01. A CP00_0000_00 é a base. E o termo final é CP10_2000_30.",
-            // NOVO ARQUIVO MOCK (simulando a extração do seu arquivo):
-            "mt04_0001_00": "Conteúdo do MT04. Os termos importantes aqui são CP11_0001_00 e CP11_0002_00. Além disso, existe o CP90_9999_99 e CP05_0505_05.",
-        };
+    <script type="module">
+        // Importa o pdfjsLib de dentro do escopo do módulo
+        import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs';
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs';
 
-        let lastExtractedTerms = []; // Variável para armazenar os termos extraídos para o download
+
+        // --- CONFIGURAÇÕES DO APLICATIVO ---
+        // Caminho ainda necessário para a função de Visualização (que tenta abrir um arquivo do servidor)
+        const PDF_BASE_PATH = '/assets/pdfs/';
+        let lastExtractedTerms = []; 
 
         /**
          * Lida com a navegação entre as telas.
          * @param {string} screenId - O ID da tela para a qual navegar.
          */
-        function navigateTo(screenId) {
+        window.navigateTo = function(screenId) {
             const screens = document.querySelectorAll('.screen');
             const subtitle = document.getElementById('app-subtitle');
 
@@ -157,10 +175,10 @@
                         subtitle.textContent = 'Selecione uma opção abaixo.';
                         break;
                     case 'consulta-screen':
-                        subtitle.textContent = 'Insira o nome do arquivo para extração.';
+                        subtitle.textContent = 'Carregue o arquivo para extração local.';
                         break;
                     case 'visualizar-screen':
-                        subtitle.textContent = 'Insira o nome do arquivo para visualização.';
+                        subtitle.textContent = 'Insira o nome do arquivo para visualização (Requer servidor).';
                         break;
                     case 'construcao-screen':
                         subtitle.textContent = 'Funcionalidade futura.';
@@ -170,75 +188,104 @@
         }
 
         /**
-         * Simula a consulta ao PDF, extraindo termos CPxx_xxxx_xx.
+         * LÊ O PDF USANDO PDF.JS NO NAVEGADOR E EXTRAI TERMOS.
          */
-        function consultarPdf() {
-            const fileNameInput = document.getElementById('pdf-consulta-input');
+        window.consultarPdf = async function() {
+            const fileInput = document.getElementById('pdf-consulta-file');
             const resultArea = document.getElementById('consulta-result-area');
             const termsDisplay = document.getElementById('extracted-terms');
             const errorDisplay = document.getElementById('consulta-error');
-            
-            // Alteração: Removemos o .toLowerCase() para permitir chaves MOCK com case-sensitive,
-            // mas mantemos o trim() e a remoção do .pdf, se existir.
-            let fileName = fileNameInput.value.trim();
-            const fullFileName = fileName.endsWith('.pdf') ? fileName.slice(0, -4) : fileName;
-            
+            const consultarBtn = document.getElementById('consultar-btn');
+            const loadingSpinner = document.getElementById('loading-spinner');
+
+            // Limpeza inicial
             resultArea.classList.add('hidden');
             errorDisplay.classList.add('hidden');
-            termsDisplay.textContent = 'Aguardando consulta...';
-
-            if (!fileName) {
-                errorDisplay.textContent = 'Por favor, preencha o nome do arquivo PDF.';
-                errorDisplay.classList.remove('hidden');
-                return;
-            }
-
-            // 1. Simulação de Leitura do Conteúdo do PDF (MOCK)
-            // Tentamos com o nome exato. Se falhar, tentamos com minúsculas.
-            let pdfContent = MOCK_PDF_CONTENTS[fullFileName] || MOCK_PDF_CONTENTS[fullFileName.toLowerCase()];
-
-
-            if (!pdfContent) {
-                // Se a chave não for encontrada, informa o usuário sobre as chaves MOCK
-                errorDisplay.textContent = `Erro: Arquivo "${fileName}.pdf" não encontrado no MOCK. Tente "relatorio_a", "exemplo_completo" ou "mt04_0001_00" (ou verifique o caminho real).`;
-                errorDisplay.classList.remove('hidden');
-                lastExtractedTerms = [];
-                return;
-            }
-
-            // 2. Extração usando Expressão Regular
-            // Padrão: CP seguido por 2 dígitos, underscore, 4 dígitos, underscore, 2 dígitos
-            const regex = /CP\d{2}_\d{4}_\d{2}/g;
-            const matches = pdfContent.match(regex) || [];
-
-            // 3. Formatação do resultado conforme solicitado: "CPxx_xxxx_xx", "CPxx_xxxx_xx", ...
-            lastExtractedTerms = matches.map(term => `"${term}"`);
+            termsDisplay.textContent = '';
+            lastExtractedTerms = [];
             
-            if (lastExtractedTerms.length > 0) {
-                const formattedOutput = lastExtractedTerms.join(',\n');
-                termsDisplay.textContent = formattedOutput;
-                resultArea.classList.remove('hidden');
-                errorDisplay.classList.add('hidden');
-                document.getElementById('save-txt-button').classList.remove('hidden'); // Garante que o botão está visível
-            } else {
-                termsDisplay.textContent = 'Nenhum termo no padrão CPxx_xxxx_xx foi encontrado neste arquivo.';
-                resultArea.classList.remove('hidden');
-                // Remove o botão de salvar se não houver termos
-                document.getElementById('save-txt-button').classList.add('hidden');
+            if (fileInput.files.length === 0) {
+                errorDisplay.textContent = 'Por favor, selecione um arquivo PDF.';
+                errorDisplay.classList.remove('hidden');
+                return;
+            }
+
+            const file = fileInput.files[0];
+
+            // Ativa o estado de carregamento
+            consultarBtn.disabled = true;
+            loadingSpinner.classList.remove('hidden');
+            termsDisplay.textContent = `Lendo e extraindo texto de "${file.name}"...`;
+
+            try {
+                // 1. Lê o arquivo como ArrayBuffer (necessário para PDF.js)
+                const arrayBuffer = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsArrayBuffer(file);
+                });
+
+                // 2. Carrega o documento PDF
+                const pdfDocument = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                const numPages = pdfDocument.numPages;
+                let fullText = '';
+                
+                // 3. Itera sobre todas as páginas e extrai o texto
+                for (let i = 1; i <= numPages; i++) {
+                    const page = await pdfDocument.getPage(i);
+                    const textContent = await page.getTextContent();
+                    
+                    // Concatena todos os itens de texto da página
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    fullText += pageText + ' ';
+                    
+                    termsDisplay.textContent = `Extraindo texto... Página ${i} de ${numPages}.`;
+                }
+
+                // 4. Aplica a Expressão Regular
+                // Padrão: CP seguido por 2 dígitos, underscore, 4 dígitos, underscore, 2 dígitos
+                const regex = /CP\d{2}_\d{4}_\d{2}/g;
+                const matches = fullText.match(regex) || [];
+
+                // 5. Formatação do resultado
+                lastExtractedTerms = matches.map(term => `"${term}"`);
+                
+                if (lastExtractedTerms.length > 0) {
+                    const formattedOutput = lastExtractedTerms.join(',\n');
+                    termsDisplay.textContent = formattedOutput;
+                    resultArea.classList.remove('hidden');
+                    document.getElementById('save-txt-button').classList.remove('hidden'); 
+                    alertUser('success', `Extração concluída! ${lastExtractedTerms.length} termos encontrados.`);
+                } else {
+                    termsDisplay.textContent = `O arquivo "${file.name}" foi lido, mas nenhum termo no padrão CPxx_xxxx_xx foi encontrado.`;
+                    resultArea.classList.remove('hidden');
+                    document.getElementById('save-txt-button').classList.add('hidden');
+                    alertUser('info', 'Nenhum termo encontrado.');
+                }
+
+            } catch (error) {
+                errorDisplay.textContent = `Erro ao processar o PDF: ${error.message}. Certifique-se de que é um arquivo PDF válido.`;
+                errorDisplay.classList.remove('hidden');
+                console.error("Erro PDF.js:", error);
+            } finally {
+                // Desativa o estado de carregamento
+                consultarBtn.disabled = false;
+                loadingSpinner.classList.add('hidden');
             }
         }
 
         /**
          * Salva a lista de termos extraídos em um arquivo .txt.
          */
-        function salvarTermosTxt() {
+        window.salvarTermosTxt = function() {
             if (lastExtractedTerms.length === 0) {
                 alertUser('info', 'Não há termos para salvar. Realize uma consulta primeiro.');
                 return;
             }
 
-            const fileNameInput = document.getElementById('pdf-consulta-input').value.trim();
-            const fileName = fileNameInput || 'termos_extraidos';
+            const fileInput = document.getElementById('pdf-consulta-file');
+            const fileName = fileInput.files.length > 0 ? fileInput.files[0].name.replace(/\.pdf$/i, '') : 'termos_extraidos';
 
             const content = lastExtractedTerms.join(',\n');
             const blob = new Blob([content], { type: 'text/plain' });
@@ -256,13 +303,12 @@
         }
 
         /**
-         * Abre o arquivo PDF em uma nova aba para visualização.
+         * Abre o arquivo PDF em uma nova aba para visualização (Depende de o arquivo estar no servidor).
          */
-        function visualizarPdf() {
+        window.visualizarPdf = function() {
             const fileNameInput = document.getElementById('pdf-visualizar-input');
             const errorDisplay = document.getElementById('visualizar-error');
-            // Nota sobre Case Sensitivity: É CRÍTICO que o nome inserido (fileName)
-            // corresponda EXATAMENTE ao nome do arquivo no servidor.
+            
             const fileName = fileNameInput.value.trim(); 
             
             errorDisplay.classList.add('hidden');
@@ -276,14 +322,13 @@
             const pdfName = fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`;
             const pdfUrl = `${PDF_BASE_PATH}${pdfName}`;
 
-            // Abre o PDF em uma nova aba (melhor UX para visualização de PDFs)
+            // Abre o PDF em uma nova aba 
             window.open(pdfUrl, '_blank');
             alertUser('success', `Tentando abrir o arquivo: ${pdfName}`);
         }
 
         /**
          * Função de utilidade para exibir mensagens ao usuário (substituindo o alert nativo).
-         * Aqui é uma simulação simples de alerta.
          */
         function alertUser(type, message) {
             console.log(`[${type.toUpperCase()}] ${message}`);
@@ -338,7 +383,6 @@
         // Inicialização
         document.addEventListener('DOMContentLoaded', () => {
             navigateTo('home-screen');
-            // Adicionado o registro do Service Worker
             registerServiceWorker(); 
         });
 
