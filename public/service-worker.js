@@ -9,10 +9,9 @@ const urlsToCache = [
     '/manifest.json',
     // URLs dos PDFs serão abertas dinamicamente e não são cacheadas aqui,
     // mas o layout e a lógica básica estarão disponíveis.
-    // Adicione URLs de ícones e fontes se estiver usando assets locais:
-    // '/assets/icons/icon-192x192.png',
-    // '/assets/icons/icon-512x512.png',
-    // ...
+    // Adicionamos as URLs dos ícones aqui para garantir o funcionamento offline:
+    '/assets/icons/icon-192x192.png',
+    '/assets/icons/icon-512x512.png',
 ];
 
 /**
