@@ -121,7 +121,8 @@
     <!-- Script JavaScript -->
     <script>
         // Configuração
-        const PDF_BASE_PATH = './assets/pdfs/';
+        // CORREÇÃO: Alterado de './assets/pdfs/' para '/assets/pdfs/' (caminho absoluto)
+        const PDF_BASE_PATH = '/assets/pdfs/';
         
         // Simulação de conteúdo de PDF para fins de demonstração (Mock de Extração)
         // Em um ambiente real, você faria uma chamada a uma API para ler o conteúdo do PDF.
@@ -252,7 +253,9 @@
         function visualizarPdf() {
             const fileNameInput = document.getElementById('pdf-visualizar-input');
             const errorDisplay = document.getElementById('visualizar-error');
-            const fileName = fileNameInput.value.trim().toLowerCase();
+            // Nota sobre Case Sensitivity: É CRÍTICO que o nome inserido (fileName)
+            // corresponda EXATAMENTE ao nome do arquivo no servidor.
+            const fileName = fileNameInput.value.trim(); 
             
             errorDisplay.classList.add('hidden');
 
@@ -307,12 +310,12 @@
             }, 3000);
         }
 
-        // PWA - Registro do Service Worker (SW)
+        /**
+         * PWA - Registro do Service Worker (SW)
+         */
         function registerServiceWorker() {
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
-                    // O arquivo 'service-worker.js' precisa ser criado separadamente,
-                    // mas registramos ele aqui.
                     navigator.serviceWorker.register('/service-worker.js')
                         .then(registration => {
                             console.log('SW registrado com sucesso. Escopo:', registration.scope);
@@ -327,8 +330,8 @@
         // Inicialização
         document.addEventListener('DOMContentLoaded', () => {
             navigateTo('home-screen');
-            // Nota: Para PWA completo, você precisará criar o service-worker.js e manifest.json.
-            // registerServiceWorker(); 
+            // Adicionado o registro do Service Worker
+            registerServiceWorker(); 
         });
 
     </script>
