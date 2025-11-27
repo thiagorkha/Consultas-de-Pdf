@@ -125,10 +125,12 @@
         const PDF_BASE_PATH = '/assets/pdfs/';
         
         // Simulação de conteúdo de PDF para fins de demonstração (Mock de Extração)
-        // Em um ambiente real, você faria uma chamada a uma API para ler o conteúdo do PDF.
+        // Adicionado o arquivo 'mt04_0001_00' com dados simulados.
         const MOCK_PDF_CONTENTS = {
             "relatorio_a": "Este é um texto de teste. O termo principal é CP12_3456_78. Temos outro termo importante, CP01_9876_54, e mais um: CP99_1111_22.",
             "exemplo_completo": "A norma CP45_0001_01 está sendo revisada. O novo código será CP45_0002_01. A CP00_0000_00 é a base. E o termo final é CP10_2000_30.",
+            // NOVO ARQUIVO MOCK (simulando a extração do seu arquivo):
+            "mt04_0001_00": "Conteúdo do MT04. Os termos importantes aqui são CP11_0001_00 e CP11_0002_00. Além disso, existe o CP90_9999_99 e CP05_0505_05.",
         };
 
         let lastExtractedTerms = []; // Variável para armazenar os termos extraídos para o download
@@ -176,9 +178,11 @@
             const termsDisplay = document.getElementById('extracted-terms');
             const errorDisplay = document.getElementById('consulta-error');
             
-            const fileName = fileNameInput.value.trim().toLowerCase();
+            // Alteração: Removemos o .toLowerCase() para permitir chaves MOCK com case-sensitive,
+            // mas mantemos o trim() e a remoção do .pdf, se existir.
+            let fileName = fileNameInput.value.trim();
             const fullFileName = fileName.endsWith('.pdf') ? fileName.slice(0, -4) : fileName;
-
+            
             resultArea.classList.add('hidden');
             errorDisplay.classList.add('hidden');
             termsDisplay.textContent = 'Aguardando consulta...';
@@ -190,10 +194,13 @@
             }
 
             // 1. Simulação de Leitura do Conteúdo do PDF (MOCK)
-            const pdfContent = MOCK_PDF_CONTENTS[fullFileName];
+            // Tentamos com o nome exato. Se falhar, tentamos com minúsculas.
+            let pdfContent = MOCK_PDF_CONTENTS[fullFileName] || MOCK_PDF_CONTENTS[fullFileName.toLowerCase()];
+
 
             if (!pdfContent) {
-                errorDisplay.textContent = `Erro: Arquivo "${fileName}.pdf" não encontrado no MOCK. Tente "relatorio_a" ou "exemplo_completo" (ou verifique o caminho real).`;
+                // Se a chave não for encontrada, informa o usuário sobre as chaves MOCK
+                errorDisplay.textContent = `Erro: Arquivo "${fileName}.pdf" não encontrado no MOCK. Tente "relatorio_a", "exemplo_completo" ou "mt04_0001_00" (ou verifique o caminho real).`;
                 errorDisplay.classList.remove('hidden');
                 lastExtractedTerms = [];
                 return;
@@ -212,6 +219,7 @@
                 termsDisplay.textContent = formattedOutput;
                 resultArea.classList.remove('hidden');
                 errorDisplay.classList.add('hidden');
+                document.getElementById('save-txt-button').classList.remove('hidden'); // Garante que o botão está visível
             } else {
                 termsDisplay.textContent = 'Nenhum termo no padrão CPxx_xxxx_xx foi encontrado neste arquivo.';
                 resultArea.classList.remove('hidden');
