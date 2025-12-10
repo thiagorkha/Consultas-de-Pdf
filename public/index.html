@@ -59,27 +59,30 @@
             <div id="home-screen" class="screen flex flex-col space-y-4">
                 <button onclick="navigateTo('consulta-screen')" 
                         class="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-3 px-4 rounded-lg shadow-md transition duration-150 ease-in-out">
-                    1. Consultar Termos (CPxx_xxxx_xx)
+                    Iniciar Extração de Termos
                 </button>
-                <button onclick="navigateTo('visualizar-screen')" 
-                        class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md transition duration-150 ease-in-out">
-                    2. Visualizar Arquivo PDF (Função Server-Side Antiga)
-                </button>
-                <button onclick="navigateTo('construcao-screen')" 
-                        class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md transition duration-150 ease-in-out">
-                    3. Outras Opções (Em Construção)
-                </button>
+                <!-- As opções 2 e 3 foram removidas conforme solicitado -->
             </div>
 
             <!-- Tela 1: Consulta e Extração de Termos -->
             <div id="consulta-screen" class="screen hidden">
                 <button onclick="navigateTo('home-screen')" class="mb-4 text-blue-600 hover:text-blue-800 font-medium flex items-center">
                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                    Voltar
+                    Voltar ao Menu
                 </button>
                 <h2 class="text-2xl font-semibold mb-4 text-gray-700">Extração de Termos (Client-Side)</h2>
                 
-                <!-- ALTERADO PARA INPUT TYPE="FILE" -->
+                <!-- Seleção da Estrutura de Consulta -->
+                <label for="extraction-type" class="block text-sm font-medium text-gray-700 mb-2">
+                    Selecione a Estrutura de Termo a Consultar:
+                </label>
+                <select id="extraction-type" 
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 mb-4 bg-white appearance-none">
+                    <option value="CP">CPxx_xxxx_xx</option>
+                    <option value="MT">MTxx_xxxx_xx</option>
+                </select>
+
+                <!-- Input de Arquivo -->
                 <label for="pdf-consulta-file" class="block text-sm font-medium text-gray-700 mb-2">
                     Selecione o arquivo PDF para extração:
                 </label>
@@ -94,7 +97,7 @@
 
                 <!-- Resultado da Consulta -->
                 <div id="consulta-result-area" class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg hidden">
-                    <h3 class="font-semibold text-lg mb-2 text-gray-700">Termos Encontrados (Estrutura: CPxx_xxxx_xx):</h3>
+                    <h3 class="font-semibold text-lg mb-2 text-gray-700">Termos Encontrados:</h3>
                     <pre id="extracted-terms" class="text-sm overflow-x-auto whitespace-pre-wrap break-words p-3 bg-white border border-gray-300 rounded-md text-gray-800"></pre>
                     
                     <button onclick="salvarTermosTxt()" id="save-txt-button"
@@ -105,37 +108,7 @@
                 <p id="consulta-error" class="text-red-500 mt-4 hidden"></p>
             </div>
 
-            <!-- Tela 2: Visualização do PDF -->
-            <div id="visualizar-screen" class="screen hidden">
-                <button onclick="navigateTo('home-screen')" class="mb-4 text-green-600 hover:text-green-800 font-medium flex items-center">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                    Voltar
-                </button>
-                <h2 class="text-2xl font-semibold mb-4 text-gray-700">Visualizar PDF (Server-Side)</h2>
-                <p class="text-sm text-gray-500 mb-4">Esta função tenta abrir o PDF usando o caminho do servidor (`/assets/pdfs/`).</p>
-                
-                <input type="text" id="pdf-visualizar-input" placeholder="Nome do arquivo PDF (ex: relatorio_a)" 
-                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 mb-4">
-                
-                <button onclick="visualizarPdf()" 
-                        class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md transition duration-150 ease-in-out">
-                    Visualizar
-                </button>
-                <p id="visualizar-error" class="text-red-500 mt-4 hidden"></p>
-            </div>
-
-            <!-- Tela 3: Em Construção -->
-            <div id="construcao-screen" class="screen hidden">
-                <button onclick="navigateTo('home-screen')" class="mb-4 text-yellow-600 hover:text-yellow-800 font-medium flex items-center">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                    Voltar
-                </button>
-                <div class="text-center p-10 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
-                    <svg class="w-12 h-12 text-yellow-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2v-2m0 2v2m0 2V8m0 2v2m0 2v2m0 2v2m0 2v-2m0-12a9 9 0 100 18 9 9 0 000-18zm0 0h.01"></path></svg>
-                    <h2 class="text-2xl font-bold text-yellow-700">Em Construção</h2>
-                    <p class="text-yellow-600 mt-2">Esta funcionalidade está sendo desenvolvida e estará disponível em breve. Agradecemos a sua paciência!</p>
-                </div>
-            </div>
+            <!-- Telas 2 e 3 foram removidas -->
 
         </div>
 
@@ -147,10 +120,6 @@
         import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs';
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs';
 
-
-        // --- CONFIGURAÇÕES DO APLICATIVO ---
-        // Caminho ainda necessário para a função de Visualização (que tenta abrir um arquivo do servidor)
-        const PDF_BASE_PATH = '/assets/pdfs/';
         let lastExtractedTerms = []; 
 
         /**
@@ -172,17 +141,12 @@
                 // Atualiza o subtítulo
                 switch(screenId) {
                     case 'home-screen':
-                        subtitle.textContent = 'Selecione uma opção abaixo.';
+                        subtitle.textContent = 'Extração de termos de PDF no lado do cliente.';
                         break;
                     case 'consulta-screen':
-                        subtitle.textContent = 'Carregue o arquivo para extração local.';
+                        subtitle.textContent = 'Carregue o arquivo e selecione a estrutura.';
                         break;
-                    case 'visualizar-screen':
-                        subtitle.textContent = 'Insira o nome do arquivo para visualização (Requer servidor).';
-                        break;
-                    case 'construcao-screen':
-                        subtitle.textContent = 'Funcionalidade futura.';
-                        break;
+                    // As outras telas foram removidas
                 }
             }
         }
@@ -192,6 +156,7 @@
          */
         window.consultarPdf = async function() {
             const fileInput = document.getElementById('pdf-consulta-file');
+            const extractionType = document.getElementById('extraction-type').value;
             const resultArea = document.getElementById('consulta-result-area');
             const termsDisplay = document.getElementById('extracted-terms');
             const errorDisplay = document.getElementById('consulta-error');
@@ -243,25 +208,29 @@
                     termsDisplay.textContent = `Extraindo texto... Página ${i} de ${numPages}.`;
                 }
 
-                // 4. Aplica a Expressão Regular
-                // Padrão: CP seguido por 2 dígitos, underscore, 4 dígitos, underscore, 2 dígitos
-                const regex = /CP\d{2}_\d{4}_\d{2}/g;
-                const matches = fullText.match(regex) || [];
+                // 4. Determina e aplica a Expressão Regular com base na seleção
+                // Padrão: [Tipo] seguido por 2 dígitos, underscore, 4 dígitos, underscore, 2 dígitos
+                const regexPattern = new RegExp(`${extractionType}\\d{2}_\\d{4}_\\d{2}`, 'g');
+                
+                const matches = fullText.match(regexPattern) || [];
 
-                // 5. Formatação do resultado
-                lastExtractedTerms = matches.map(term => `"${term}"`);
+                // 5. Usa Set para garantir a desduplicação dos termos (Requisito 3)
+                const uniqueMatches = [...new Set(matches)];
+
+                // 6. Formatação do resultado
+                lastExtractedTerms = uniqueMatches.map(term => `"${term}"`);
                 
                 if (lastExtractedTerms.length > 0) {
                     const formattedOutput = lastExtractedTerms.join(',\n');
                     termsDisplay.textContent = formattedOutput;
                     resultArea.classList.remove('hidden');
                     document.getElementById('save-txt-button').classList.remove('hidden'); 
-                    alertUser('success', `Extração concluída! ${lastExtractedTerms.length} termos encontrados.`);
+                    alertUser('success', `Extração concluída! ${lastExtractedTerms.length} termos únicos (${extractionType}) encontrados.`);
                 } else {
-                    termsDisplay.textContent = `O arquivo "${file.name}" foi lido, mas nenhum termo no padrão CPxx_xxxx_xx foi encontrado.`;
+                    termsDisplay.textContent = `O arquivo "${file.name}" foi lido, mas nenhum termo no padrão ${extractionType}xx_xxxx_xx foi encontrado.`;
                     resultArea.classList.remove('hidden');
                     document.getElementById('save-txt-button').classList.add('hidden');
-                    alertUser('info', 'Nenhum termo encontrado.');
+                    alertUser('info', `Nenhum termo (${extractionType}) encontrado.`);
                 }
 
             } catch (error) {
@@ -285,7 +254,8 @@
             }
 
             const fileInput = document.getElementById('pdf-consulta-file');
-            const fileName = fileInput.files.length > 0 ? fileInput.files[0].name.replace(/\.pdf$/i, '') : 'termos_extraidos';
+            const type = document.getElementById('extraction-type').value;
+            const fileNameBase = fileInput.files.length > 0 ? fileInput.files[0].name.replace(/\.pdf$/i, '') : 'termos_extraidos';
 
             const content = lastExtractedTerms.join(',\n');
             const blob = new Blob([content], { type: 'text/plain' });
@@ -293,7 +263,7 @@
             // Cria um link de download temporário
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = `${fileName}_extraidos.txt`;
+            a.download = `${fileNameBase}_${type}_extraidos.txt`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -301,31 +271,8 @@
 
             alertUser('success', `Arquivo "${a.download}" salvo com sucesso!`);
         }
-
-        /**
-         * Abre o arquivo PDF em uma nova aba para visualização (Depende de o arquivo estar no servidor).
-         */
-        window.visualizarPdf = function() {
-            const fileNameInput = document.getElementById('pdf-visualizar-input');
-            const errorDisplay = document.getElementById('visualizar-error');
-            
-            const fileName = fileNameInput.value.trim(); 
-            
-            errorDisplay.classList.add('hidden');
-
-            if (!fileName) {
-                errorDisplay.textContent = 'Por favor, preencha o nome do arquivo PDF.';
-                errorDisplay.classList.remove('hidden');
-                return;
-            }
-
-            const pdfName = fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`;
-            const pdfUrl = `${PDF_BASE_PATH}${pdfName}`;
-
-            // Abre o PDF em uma nova aba 
-            window.open(pdfUrl, '_blank');
-            alertUser('success', `Tentando abrir o arquivo: ${pdfName}`);
-        }
+        
+        // Funções de visualização foram removidas
 
         /**
          * Função de utilidade para exibir mensagens ao usuário (substituindo o alert nativo).
